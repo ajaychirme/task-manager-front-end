@@ -1,4 +1,4 @@
-const hostName = "http://localhost:3003";
+const hostName = "https://taskmanagerserverv1.onrender.com";
 
 const loginRoute = `${hostName}/auth/login`;
 const registerRoute = `${hostName}/auth/register`;
