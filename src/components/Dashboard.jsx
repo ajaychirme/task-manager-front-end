@@ -119,7 +119,7 @@ function Dashboard() {
         username: username,
       });
       if (data.status == true) {
-        toast.success(data.msg,toastOptions)
+        toast.success(data.msg, toastOptions);
         localStorage.setItem("task-manager-user", JSON.stringify(data.user));
       }
       setIsDataFetched(false);
@@ -141,7 +141,8 @@ function Dashboard() {
       <div
         style={{
           background: "linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)",
-          height:"100vh"
+          height: "fit-content",
+          minHeight: "100vh",
         }}
       >
         <Button
