@@ -185,7 +185,7 @@ function Dashboard() {
           </Box>
         </div>
         <div className="TaskContainer">
-          <ul>
+          <Box>
             {tasks &&
               tasks.map((task, index) => (
                 <div>
@@ -284,7 +284,7 @@ function Dashboard() {
                   </Box>
                 </div>
               ))}
-          </ul>
+          </Box>
         </div>
       </div>
       <ToastContainer />
