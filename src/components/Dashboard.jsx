@@ -184,7 +184,7 @@ function Dashboard() {
             </Button>
           </Box>
         </div>
-        <div className="TaskContainer">
+        <div>
           <Box>
             {tasks &&
               tasks.map((task, index) => (
