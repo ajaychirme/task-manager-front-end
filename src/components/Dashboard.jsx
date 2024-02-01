@@ -23,7 +23,6 @@ function Dashboard() {
   const [focusedIndex, setFocusedIndex] = useState(null);
   const taskValue = useRef("");
   const navigate = useNavigate();
-  const [isDataFetched, setIsDataFetched] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("jwt")) {
@@ -36,8 +35,6 @@ function Dashboard() {
   useEffect(() => {
     const getAllTasks = async () => {
       try {
-        if (!isDataFetched) {
-          // Check if data is already fetched
           const username = JSON.parse(
             localStorage.getItem("task-manager-user")
           ).username;
@@ -46,15 +43,14 @@ function Dashboard() {
           });
           if (data.status === true) {
             setTasks(data.tasks);
-            setIsDataFetched(true); // Set the flag to true after fetching data
           }
-        }
+        
       } catch (error) {
         console.error("Error:", error.message);
       }
     };
     getAllTasks();
-  }, [isDataFetched]); // Add isDataFetched as a dependency
+  }, []);
 
   const handleCreateTask = async () => {
     if (taskValue.current.value.length == 0) {
@@ -71,16 +67,12 @@ function Dashboard() {
         });
         if (data.status == true) {
           toast.success(data.msg, toastOptions);
+          setTasks(data.user.tasks);
         }
         taskValue.current.value = "";
         localStorage.setItem("task-manager-user", JSON.stringify(data.user));
-        setIsDataFetched(false);
       } catch (error) {
-        if (error.response && error.response.status === 400) {
-          console.log("Error: Bad request");
-        } else {
-          console.error("Error:", error.message);
-        }
+        toast.error(error.message, toastOptions);
       }
     }
   };
@@ -97,10 +89,10 @@ function Dashboard() {
       if (data.status == true) {
         toast.success(data.msg, toastOptions);
         localStorage.setItem("task-manager-user", JSON.stringify(data.user));
+        setTasks(data.user.tasks);
       }
-      setIsDataFetched(false);
     } catch (error) {
-      console.error("Error:", error.message);
+      toast.error(error.message, toastOptions);
     }
   };
 
@@ -112,7 +104,6 @@ function Dashboard() {
       const taskId = index;
       const task = tasks.find((task) => task._id === index);
       const updatedTask = task.name;
-      console.log("updatedTask", updatedTask);
       const { data } = await axios.post(updateTaskRoute, {
         taskId: index,
         updatedTask: updatedTask,
@@ -120,11 +111,11 @@ function Dashboard() {
       });
       if (data.status == true) {
         toast.success(data.msg, toastOptions);
+        setTasks(data.user.tasks);
         localStorage.setItem("task-manager-user", JSON.stringify(data.user));
       }
-      setIsDataFetched(false);
     } catch (error) {
-      console.error("Error:", error.message);
+      toast.error(error.message, toastOptions);
     }
   };
 
