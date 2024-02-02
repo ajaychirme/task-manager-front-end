@@ -91,6 +91,16 @@ function Dashboard() {
         }
       },
     });
+
+    const textareaRef = useRef("");
+    const [editedTaskName, setEditedTaskName] = useState(task.name);
+    useEffect(() => {
+      if (focusedIndex === index && textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.selectionStart = textareaRef.current.value.length;
+        textareaRef.current.selectionEnd = textareaRef.current.value.length;
+      }
+    }, [focusedIndex, index]);
   
     return (
       <div ref={(node) => drag(drop(node))} style={{ opacity: isDragging ? 0.5 : 1 }}>
@@ -123,11 +133,13 @@ function Dashboard() {
               <textarea
                 rows="6"
                 cols="100"
-                value={task.name}
+                value={editedTaskName}
+                ref={textareaRef}
                 onChange={(e) => {
                   const newTasks = [...tasks];
                   newTasks[index].name = e.target.value;
                   setTasks(newTasks);
+                  setEditedTaskName(e.target.value);
                 }}
               />
             </Box>
