@@ -1,15 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
-import { Button, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  TextField,
+  Typography,
+} from "@mui/material";
+import Box from "@mui/material/Box";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
-import Box from "@mui/material/Box";
-
+import { useDrag, useDrop, DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { toastOptions } from "../utensils/constants";
-
 import {
   addTaskRoute,
   getAllTasksRoute,
@@ -35,22 +38,157 @@ function Dashboard() {
   useEffect(() => {
     const getAllTasks = async () => {
       try {
-          const username = JSON.parse(
-            localStorage.getItem("task-manager-user")
-          ).username;
-          let { data } = await axios.post(getAllTasksRoute, {
-            username: username,
-          });
-          if (data.status === true) {
-            setTasks(data.tasks);
-          }
-        
+        const username = JSON.parse(localStorage.getItem("task-manager-user")).username;
+        let { data } = await axios.post(getAllTasksRoute, {
+          username: username,
+        });
+        if (data.status === true) {
+          setTasks(data.tasks);
+        }
       } catch (error) {
         console.error("Error:", error.message);
       }
     };
     getAllTasks();
   }, []);
+
+  useEffect(() => {
+    // This useEffect will run whenever tasks change, i.e., after every drag and drop
+    const updateLocalStorage = () => {
+      const user = JSON.parse(localStorage.getItem("task-manager-user"));
+      if (user) {
+        user.tasks = tasks;
+        localStorage.setItem("task-manager-user", JSON.stringify(user));
+      }
+    };
+
+    updateLocalStorage();
+  }, [tasks]);
+
+  function DraggableTaskBox({
+    task,
+    index,
+    focusedIndex,
+    setFocusedIndex,
+    handleSave,
+    handleDeleteTask,
+    moveTask,
+  }) {
+    const [{ isDragging }, drag] = useDrag({
+      type: "TASK",
+      item: { index },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+    });
+  
+    const [, drop] = useDrop({
+      accept: "TASK",
+      hover: (draggedItem) => {
+        if (draggedItem.index !== index) {
+          moveTask(draggedItem.index, index);
+          draggedItem.index = index;
+        }
+      },
+    });
+  
+    return (
+      <div ref={(node) => drag(drop(node))} style={{ opacity: isDragging ? 0.5 : 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "fitContent",
+            minHeight: "8rem",
+            height: "fitContent",
+            border: "2px solid black",
+            mx: 3,
+            my: 1,
+            p: 2,
+            borderRadius: "2rem",
+            background: "linear-gradient(45deg, #FFECD6 30%, #EEF5FF 90%)",
+          }}
+        >
+          {focusedIndex === index ? (
+            <Box
+              component="form"
+              sx={{
+                "& > :not(style)": { m: 1, width: "25ch" },
+              }}
+              noValidate
+              autoComplete="off"
+            >
+              <textarea
+                rows="6"
+                cols="100"
+                value={task.name}
+                onChange={(e) => {
+                  const newTasks = [...tasks];
+                  newTasks[index].name = e.target.value;
+                  setTasks(newTasks);
+                }}
+              />
+            </Box>
+          ) : (
+            <Typography>{task.name}</Typography>
+          )}
+          <Box
+            sx={{
+              marginTop: "10px",
+              display: "flex",
+              flexWrap: "wrap",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              width: "35%",
+            }}
+          >
+            {focusedIndex === index ? (
+              <Button
+                startIcon={<SaveIcon />}
+                color="secondary"
+                variant="outlined"
+                size="large"
+                mx={20}
+                onClick={() => {
+                  handleSave(tasks[index]._id);
+                  setFocusedIndex(null);
+                }}
+              >
+                Save
+              </Button>
+            ) : (
+              <Button
+                startIcon={<EditIcon />}
+                color="secondary"
+                variant="outlined"
+                size="large"
+                mx={2}
+                onClick={() => {
+                  if (focusedIndex === null) {
+                    setFocusedIndex(index);
+                  }
+                }}
+              >
+                Edit
+              </Button>
+            )}
+            <Button
+              onClick={() => handleDeleteTask(task._id)}
+              startIcon={<DeleteIcon />}
+              color="secondary"
+              variant="outlined"
+              size="large"
+              mx={2}
+            >
+              Delete
+            </Button>
+          </Box>
+        </Box>
+      </div>
+    );
+  }
 
   const handleCreateTask = async () => {
     if (taskValue.current.value.length == 0) {
@@ -127,6 +265,13 @@ function Dashboard() {
     navigate("/login");
   };
 
+  const moveTask = (fromIndex, toIndex) => {
+    const newTasks = [...tasks];
+    const [movedTask] = newTasks.splice(fromIndex, 1);
+    newTasks.splice(toIndex, 0, movedTask);
+    setTasks(newTasks);
+  };
+
   return (
     <>
       <div
@@ -176,106 +321,23 @@ function Dashboard() {
           </Box>
         </div>
         <div>
-          <Box>
-            {tasks &&
-              tasks.map((task, index) => (
-                <div>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "fitContent",
-                      minHeight: "8rem",
-                      height: "fitContent",
-                      border: "2px solid black",
-                      mx: 3,
-                      my: 1,
-                      p: 2,
-                      borderRadius: "2rem",
-                      background:
-                        "linear-gradient(45deg, #FFECD6 30%, #EEF5FF 90%)",
-                    }}
-                  >
-                    {focusedIndex === index ? (
-                      <Box
-                        component="form"
-                        sx={{
-                          "& > :not(style)": { m: 1, width: "25ch" },
-                        }}
-                        noValidate
-                        autoComplete="off"
-                      >
-                        <textarea
-                          rows="6"
-                          cols="100"
-                          value={task.name}
-                          onChange={(e) => {
-                            const newTasks = [...tasks];
-                            newTasks[index].name = e.target.value;
-                            setTasks(newTasks);
-                          }}
-                        />
-                      </Box>
-                    ) : (
-                      <Typography>{task.name}</Typography>
-                    )}
-                    <Box
-                      sx={{
-                        marginTop: "10px",
-                        display: "flex",
-                        flexWrap: "wrap",
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        width: "35%",
-                      }}
-                    >
-                      {focusedIndex === index ? (
-                        <Button
-                          startIcon={<SaveIcon />}
-                          color="secondary"
-                          variant="outlined"
-                          size="large"
-                          mx={20}
-                          onClick={() => {
-                            handleSave(tasks[index]._id);
-                            setFocusedIndex(null);
-                          }}
-                        >
-                          Save
-                        </Button>
-                      ) : (
-                        <Button
-                          startIcon={<EditIcon />}
-                          color="secondary"
-                          variant="outlined"
-                          size="large"
-                          mx={2}
-                          onClick={() => {
-                            if (focusedIndex === null) {
-                              setFocusedIndex(index);
-                            }
-                          }}
-                        >
-                          Edit
-                        </Button>
-                      )}
-                      <Button
-                        onClick={() => handleDeleteTask(task._id)}
-                        startIcon={<DeleteIcon />}
-                        color="secondary"
-                        variant="outlined"
-                        size="large"
-                        mx={2}
-                      >
-                        Delete
-                      </Button>
-                    </Box>
-                  </Box>
-                </div>
-              ))}
-          </Box>
+          <DndProvider backend={HTML5Backend}>
+            <Box>
+              {tasks &&
+                tasks.map((task, index) => (
+                  <DraggableTaskBox
+                    key={task._id}
+                    task={task}
+                    index={index}
+                    focusedIndex={focusedIndex}
+                    setFocusedIndex={setFocusedIndex}
+                    handleSave={handleSave}
+                    handleDeleteTask={handleDeleteTask}
+                    moveTask={moveTask}
+                  />
+                ))}
+            </Box>
+          </DndProvider>
         </div>
       </div>
       <ToastContainer />
