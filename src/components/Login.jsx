@@ -14,6 +14,7 @@ import { Button, Typography } from "@mui/material";
 function Login() {
   const navigate = useNavigate();
   const [values, setValues] = useState({ username: "", password: "" });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("task-manager-user")) {
@@ -39,6 +40,7 @@ function Login() {
 
   const handleFormSubmission = async (event) => {
     event.preventDefault();
+    setLoading(true)
     if (validateForm()) {
       const { username, password } = values;
       try {
@@ -50,6 +52,7 @@ function Login() {
           toast.error(data.msg, toastOptions);
         }
         if (data.status == true) {
+          setLoading(false)
           toast.success(data.msg);
           const { password: userPassword, ...userWithoutPassword } = data.user;
           localStorage.setItem(
@@ -69,6 +72,8 @@ function Login() {
         } else {
           toast.error("Error:", error.message, toastOptions);
         }
+      } finally {
+        setLoading(false)
       }
     }
   };
@@ -136,6 +141,7 @@ function Login() {
             onClick={(e) => handleFormSubmission(e)}
             variant="contained"
             size="large"
+            disabled={loading}
           >
             Login
           </Button>

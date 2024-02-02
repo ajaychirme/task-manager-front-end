@@ -19,6 +19,7 @@ function Register() {
     password: "",
     confirmPassword: "",
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("task-manager-user")) {
@@ -62,6 +63,7 @@ function Register() {
   const handleFormSubmission = async (event) => {
     try {
       event.preventDefault();
+      setLoading(true);
       if (handleValidation()) {
         const { email, username, password } = values;
         const { data } = await axios.post(registerRoute, {
@@ -74,11 +76,14 @@ function Register() {
           toast.error(data.msg, toastOptions);
         }
         if (data.status === true) {
+          setLoading(false)
           navigate("/login");
         }
       }
     } catch (err) {
       toast.error(err, toastOptions);
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -166,6 +171,7 @@ function Register() {
             color="secondary"
             variant="contained"
             size="large"
+            disabled={loading}
             onClick={(e) => {
               handleFormSubmission(e);
             }}
