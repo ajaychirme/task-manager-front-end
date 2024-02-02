@@ -107,6 +107,9 @@ function Register() {
             borderRadius: "5%",
             background: 'linear-gradient(45deg, #FFECD6 30%, #EEF5FF 90%)',
             p: 5,
+            '@media screen and (max-width: 767px)': {
+              width: '70%',
+            },
           }}
         >
           <Typography variant="h5">Register</Typography>
